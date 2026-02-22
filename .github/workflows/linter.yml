@@ -1,0 +1,36 @@
+name: Linter (Checkstyle)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Download Checkstyle
+        run: |
+          curl -L -o checkstyle.jar https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.12.4/checkstyle-10.12.4-all.jar
+
+      - name: Run Checkstyle (allowed to fail)
+        run: |
+          if [ -f checkstyle.xml ] && [ -f User.java ]; then
+            java -jar checkstyle.jar -c checkstyle.xml User.java
+          else
+            echo "checkstyle.xml or User.java not found in repo root"
+            exit 1
+          fi
