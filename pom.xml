@@ -1,90 +1,61 @@
-package docinc;
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+    <groupId>docinc</groupId>
+    <artifactId>oose-docinc-tests</artifactId>
+    <version>1.0-SNAPSHOT</version>
 
-import java.time.LocalDate;
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.10.2</junit.version>
+        <mockito.version>5.12.0</mockito.version>
+    </properties>
 
-import org.junit.jupiter.api.Test;
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-class DeliveryPreferenceServiceTest {
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
-    // --- STUB ---
-    // A stub returns a fixed value for the fee policy.
-    static class StubFeePolicy implements FeePolicy {
-        @Override
-        public double paperStatementFee() {
-            return 2.00;
-        }
-    }
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
 
-    // --- DUMMY notification implementation for non-mock tests ---
-    static class DummyNotificationGateway implements NotificationGateway {
-        @Override
-        public void sendPreferenceChangeNotice(String email, String message) {
-            // do nothing
-        }
-    }
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>17</release>
+                </configuration>
+            </plugin>
 
-    @Test
-    void changePreference_toPaper_appliesFeeAnd7DayDelay_usingStub() {
-        // Stub used here
-        FeePolicy feePolicy = new StubFeePolicy();
-        NotificationGateway dummyGateway = new DummyNotificationGateway();
-        DeliveryPreferenceService service = new DeliveryPreferenceService(feePolicy, dummyGateway);
-
-        LocalDate requestDate = LocalDate.of(2026, 2, 22);
-
-        DeliveryPreferenceService.PreferenceChangeResult result =
-                service.changePreference("john@example.com", "PAPER", requestDate);
-
-        assertEquals("PAPER", result.getMethod());
-        assertTrue(result.isPaperFeeEnabled());
-        assertEquals(2.00, result.getFee(), 0.001);
-        assertEquals(LocalDate.of(2026, 3, 1), result.getEffectiveDate()); // +7 days
-    }
-
-    @Test
-    void changePreference_toEmail_hasNoFeeAnd7DayDelay() {
-        FeePolicy feePolicy = new StubFeePolicy();
-        NotificationGateway dummyGateway = new DummyNotificationGateway();
-        DeliveryPreferenceService service = new DeliveryPreferenceService(feePolicy, dummyGateway);
-
-        LocalDate requestDate = LocalDate.of(2026, 2, 22);
-
-        DeliveryPreferenceService.PreferenceChangeResult result =
-                service.changePreference("john@example.com", "EMAIL", requestDate);
-
-        assertEquals("EMAIL", result.getMethod());
-        assertFalse(result.isPaperFeeEnabled());
-        assertEquals(0.0, result.getFee(), 0.001);
-        assertEquals(LocalDate.of(2026, 3, 1), result.getEffectiveDate());
-    }
-
-    @Test
-    void changePreference_invalidMethod_throwsException() {
-        FeePolicy feePolicy = new StubFeePolicy();
-        NotificationGateway dummyGateway = new DummyNotificationGateway();
-        DeliveryPreferenceService service = new DeliveryPreferenceService(feePolicy, dummyGateway);
-
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                service.changePreference("john@example.com", "FAX", LocalDate.of(2026, 2, 22)));
-
-        assertTrue(ex.getMessage().contains("EMAIL or PAPER"));
-    }
-
-    @Test
-    void changePreference_sendsNotification_usingMock() {
-        FeePolicy feePolicy = new StubFeePolicy();
-
-        // Mock used here
-        NotificationGateway mockGateway = mock(NotificationGateway.class);
-
-        DeliveryPreferenceService service = new DeliveryPreferenceService(feePolicy, mockGateway);
-
-        service.changePreference("john@example.com", "PAPER", LocalDate.of(2026, 2, 22));
-
-        verify(mockGateway, times(1))
-                .sendPreferenceChangeNotice(eq("john@example.com"), contains("PAPER"));
-    }
-}
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
